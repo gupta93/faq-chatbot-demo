@@ -1,10 +1,14 @@
+import logging
+from pathlib import Path
+
 import pytest
 
 from rag.answer import REFUSAL, answer_question
 from rag.llm import LLMConfig
+from rag.loader import load_documents
 from rag.retriever import DocumentRetriever
 
-DATA_DIR = "data"
+DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 MOCK_CONFIG = LLMConfig(
     api_key=None,
     base_url="https://openrouter.ai/api/v1",
@@ -21,7 +25,7 @@ def mock_env(monkeypatch):
 
 @pytest.fixture
 def retriever():
-    return DocumentRetriever(data_dir=DATA_DIR, min_score=0.08)
+    return DocumentRetriever(data_dir=str(DATA_DIR), min_score=0.08)
 
 
 def test_retrieval_finds_relevant_plan_pricing(retriever):
@@ -54,3 +58,22 @@ def test_citations_on_successful_answer(retriever):
     assert any("beanvoyage" in d or "shipping" in d for d in doc_ids)
     assert all(c.section for c in result.citations)
     assert "[Mock mode]" in result.text
+
+
+def test_load_documents_skips_corrupt_pdf(tmp_path, caplog):
+    (tmp_path / "notes.txt").write_text("Valid note.", encoding="utf-8")
+    (tmp_path / "broken.pdf").write_bytes(b"%PDF-1.4\n% corrupted content")
+
+    with caplog.at_level(logging.WARNING):
+        docs = load_documents(tmp_path)
+
+    assert docs == [("notes.txt", "Valid note.")]
+    assert any("broken.pdf" in record.message for record in caplog.records)
+
+
+def test_load_documents_includes_sample_pdf():
+    docs = load_documents(DATA_DIR)
+    pdf_docs = [text for name, text in docs if name.endswith(".pdf")]
+    assert pdf_docs, "expected at least one PDF in data/"
+    combined = " ".join(pdf_docs).lower()
+    assert "gift" in combined or "25" in combined

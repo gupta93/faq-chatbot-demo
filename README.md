@@ -22,28 +22,47 @@ For demos and tests, use mock mode — the app quotes retrieved text without cal
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-MOCK_LLM=1 streamlit run app.py
+cp .env.example .env        # Windows: copy .env.example .env
+```
+
+In `.env`, set `MOCK_LLM=1`, then run:
+
+```bash
+streamlit run app.py
+```
+
+On Windows (Command Prompt), you can set mock mode for one session without editing `.env`:
+
+```bat
+set MOCK_LLM=1
+streamlit run app.py
 ```
 
 Open the URL Streamlit prints (usually http://localhost:8501).
 
 ## Live answers with OpenRouter
 
-1. Copy `.env.example` to `.env`.
-2. Add your [OpenRouter](https://openrouter.ai/) API key:
+### Get an OpenRouter key (beginner-friendly)
 
-   ```env
-   OPENAI_API_KEY=sk-or-v1-...
-   OPENAI_BASE_URL=https://openrouter.ai/api/v1
-   MODEL=openai/gpt-4o-mini
-   MOCK_LLM=0
-   ```
+1. Sign up at [openrouter.ai](https://openrouter.ai/).
+2. Open **Keys** in the dashboard and create an API key.
+3. Add a small amount of credit to your account, or pick a model tagged **:free** on OpenRouter if you prefer not to pay for testing.
+4. Copy `.env.example` to `.env` and paste your key into `OPENAI_API_KEY`. That variable name is shared with OpenAI-compatible tools — here it holds your **OpenRouter** key, not an OpenAI Platform key.
 
-3. Run:
+Example `.env` for live chat:
 
-   ```bash
-   streamlit run app.py
-   ```
+```env
+OPENAI_API_KEY=sk-or-v1-...
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+MODEL=openai/gpt-4o-mini
+MOCK_LLM=0
+```
+
+Run:
+
+```bash
+streamlit run app.py
+```
 
 You can point `OPENAI_BASE_URL` at OpenAI or any compatible provider and set `MODEL` to whatever they support.
 

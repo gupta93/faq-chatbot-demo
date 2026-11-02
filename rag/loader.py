@@ -1,6 +1,10 @@
+import logging
 from pathlib import Path
 
 from pypdf import PdfReader
+from pypdf.errors import PyPdfError
+
+logger = logging.getLogger(__name__)
 
 
 def load_text_file(path: Path) -> str:
@@ -36,6 +40,7 @@ def load_documents(data_dir: Path) -> list[tuple[str, str]]:
                 docs.append((rel, load_text_file(path)))
             elif suffix == ".pdf":
                 docs.append((rel, load_pdf_file(path)))
-        except OSError:
+        except (OSError, PyPdfError) as exc:
+            logger.warning("Skipping unreadable document %s: %s", rel, exc)
             continue
     return docs
